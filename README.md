@@ -32,6 +32,10 @@ For English readers, we are currently translating this book into an online versi
 - ch12 Loop closure & DBoW3
 - ch13 Dense reconstruction & REMODE, Octomap
 
+# fork 高博的工程
+
+把第三方包给删了，本工程只是自己对高博的代码进行微调学习，没有太大修改
+
 # slambook (中文说明)
 我最近写了一本有关视觉SLAM的书籍，这是它对应的代码。书籍将会在明年春天由电子工业出版社出版。
 
