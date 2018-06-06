@@ -17,10 +17,12 @@ struct CurveFittingCostFunction {
 
     // 残差的计算
     template <typename T>
-    bool operator()(const T* const abc,     // 模型参数，有3维
+    bool operator()(const T* const a,
+                    const T* const b,
+                    const T* const c,
                     T* residual) const {   // 残差
         // y-exp(ax^2+bx+c)
-        residual[0] = T(_y) - ceres::exp(abc[0] * T(_x) * T(_x) + abc[1] * T(_x) + abc[2]);
+        residual[0] = T(_y) - ceres::exp(a[0] * T(_x) * T(_x) + b[0] * T(_x) + c[0]);
         return true;
     }
     const double _x, _y;    // x, y 数据
@@ -47,17 +49,13 @@ int main(int argc, char** argv)
         std::cout << x_data[i] << " " << y_data[i] << "\n";
     }
 
-    // 构建最小二乘问题
     Problem problem;
     for (int i = 0; i < N; i++) {
-        problem.AddResidualBlock (     // 向问题中添加误差项
-            // 使用自动求导，模板参数：误差类型，输出维度，输入维度，维数要与前面struct中一致
-            new AutoDiffCostFunction<CurveFittingCostFunction, 1, 3> (
+        problem.AddResidualBlock(new AutoDiffCostFunction<CurveFittingCostFunction, 1, 1, 1, 1>(
                 new CurveFittingCostFunction(x_data[i], y_data[i])
-            ),
-            nullptr,            // 核函数，这里不使用，为空
-            abc                 // 待估计参数
-        );
+                                 ),
+                                 nullptr,
+                                 &abc[0], &abc[1], &abc[2]);
     }
 
     // 配置求解器
