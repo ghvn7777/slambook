@@ -137,11 +137,11 @@ int main(int argc, char** argv)
 
     // verify p1 = R*p2 + t
     for (int i = 0; i < 5; i++) {
-        cout<<"p1 = "<<pts1[i]<<endl;
-        cout<<"p2 = "<<pts2[i]<<endl;
-        cout<<"(R*p2+t) = "<<
-            R * (Mat_<double>(3,1)<<pts2[i].x, pts2[i].y, pts2[i].z) + t
-            <<endl;
+        cout << "p1 =       " << pts1[i] <<endl;
+        cout << "p2 =       " << pts2[i] <<endl;
+        cout << "(R*p2+t) = "
+             << (R * (Mat_<double>(3, 1) << pts2[i].x, pts2[i].y, pts2[i].z) + t).t()
+             <<endl;
         cout<<endl;
     }
 }
