@@ -48,7 +48,9 @@ int main(int argc, char** argv)
     pose_estimation_2d2d(keypoints_1, keypoints_2, matches, R, t);
 
     // -- 验证 E = t^R * scale
-    // 因为解出来的 E 实际上是在一个零空间上的矩阵，缺一个自由度，所以差一个缩放
+    // 对极约束是等式为 0 的约束，所以乘上一个非零标量，等式依然成立
+    // 这里 t^R 不一定相等的原因是 E 通过奇异值分解来计算的
+    // 对角矩阵取值为 diag(1, 1, 0) * scale。 不唯一，导致算出的 t^R 相差一个尺度因子
     Mat t_x = (Mat_<double>(3, 3) <<
                     0, -t.at<double>(2, 0), t.at<double>(1, 0),
                     t.at<double>(2, 0), 0, -t.at<double>(0, 0),
@@ -121,6 +123,9 @@ void find_feature_matches(const Mat& img_1,
 
 Point2d pixel2cam(const Point2d& p, const Mat& K)
 {
+    // u = fx * (X / Z) + cx
+    // v = fy * (Y / Z) + cy
+    // 下面默认 Z = 1 了，求的是归一化坐标
     return Point2d((p.x - K.at<double>(0, 2)) / K.at<double>(0, 0),
                    (p.y - K.at<double>(1, 2)) / K.at<double>(1, 1));
 }
@@ -147,6 +152,7 @@ void pose_estimation_2d2d(std::vector<KeyPoint> keypoints_1,
 
     // -- 计算基础矩阵
     Mat fundamental_matrix;
+    // 书上基础矩阵需要内参的原因是给的变量是归一化坐标，这里直接给的是像素坐标，就不用传入内参转换了
     fundamental_matrix = findFundamentalMat(points1, points2, CV_FM_8POINT);
     cout << "fundamental_matrix is" << endl << fundamental_matrix << endl;
 
@@ -155,6 +161,7 @@ void pose_estimation_2d2d(std::vector<KeyPoint> keypoints_1,
     Point2d principal_point(325.1, 249.7);	// 相机光心, TUM dataset 标定值 cx, cy
     double focal_length = 521;			    // 相机焦距, TUM dataset 标定值 fx, fy (这里默认是 fx = fy 的）
     Mat essential_matrix;
+    // 本质矩阵需要的是归一化坐标，所以要传入相机内参将像素坐标转换成归一化坐标
     essential_matrix = findEssentialMat(points1, points2, focal_length, principal_point);
     cout << "essential_matrix is" << endl << essential_matrix << endl;
 
