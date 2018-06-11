@@ -51,6 +51,7 @@ int main(int argc, char** argv)
     // 对极约束是等式为 0 的约束，所以乘上一个非零标量，等式依然成立
     // 这里 t^R 不一定相等的原因是 E 通过奇异值分解来计算的
     // 对角矩阵取值为 diag(1, 1, 0) * scale。 不唯一，导致算出的 t^R 相差一个尺度因子
+    // opencv 函数将解出来的 t 归一化，也就是让 ||t|| 为 1
     Mat t_x = (Mat_<double>(3, 3) <<
                     0, -t.at<double>(2, 0), t.at<double>(1, 0),
                     t.at<double>(2, 0), 0, -t.at<double>(0, 0),
