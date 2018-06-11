@@ -164,7 +164,7 @@ void bundleAdjustment(const vector<Point3f> points_3d,
     optimizer.addVertex(pose);
 
     int index = 1;
-    for (const Point3f p : points_3d) {  // landmarks 第一个相机推测出匹配点的世界坐标
+    for (const Point3f p : points_3d) {  // landmarks 第一个相机检测出匹配点的第一个相机坐标系的归坐标
         g2o::VertexSBAPointXYZ* point = new g2o::VertexSBAPointXYZ();
         point->setId(index++);
         point->setEstimate(Eigen::Vector3d(p.x, p.y, p.z));
@@ -184,6 +184,7 @@ void bundleAdjustment(const vector<Point3f> points_3d,
     index = 1;
     for (const Point2f p : points_2d) {
         // 这个类的 computerError 是根据 相机的位姿 R, t 与 landmarks Pose 的 p = x, y z 来计算 Rp + t
+        // 这里的 R 是 p1 到 p2 的旋转矩阵。
         // 得到了该点在第二个相机坐标系的坐标，然后根据内参来计算在该点像素坐标系的坐标
         // 然后用已知的匹配点在第二个相机的像素坐标与这个从第一个相机推导出来的坐标做差，得到误差，也就是 观测值 - 预测值
         g2o::EdgeProjectXYZ2UV* edge = new g2o::EdgeProjectXYZ2UV();
