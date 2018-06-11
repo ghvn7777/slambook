@@ -30,8 +30,7 @@ Point2f pixel2cam(const Point2d& p, const Mat& K);
 
 int main(int argc, char** argv)
 {
-    if (argc != 3)
-    {
+    if (argc != 3) {
         cout << "usage: triangulation img1 img2" << endl;
         return 1;
     }
@@ -197,10 +196,11 @@ void triangulation(const vector<KeyPoint>& keypoint_1,
     // 转换成非齐次坐标
     for (int i = 0; i < pts_4d.cols; i++) {
         Mat x = pts_4d.col(i);
-        // 上面返回的 pts_4d 是齐次坐标 [X, Y, Z, 1]
-        // 这里我测试确实最后一维是 1，其实没必要除
-        x /= x.at<float>(3, 0); // 归一化
+        // 上面返回的 pts_4d 是齐次坐标（也叫投影坐标） [X, Y, Z, scale]
+        // scale 是将点投影到的平面。我们要投影到 scale = 1 的平面
+        // https://zh.wikipedia.org/wiki/%E9%BD%90%E6%AC%A1%E5%9D%90%E6%A0%87
         // cout << "pts 4d at (3, 0): " << x.at<float>(3, 0) << endl;
+        x /= x.at<float>(3, 0); // 归一化
         Point3d p(x.at<float>(0, 0),
                   x.at<float>(1, 0),
                   x.at<float>(2, 0));

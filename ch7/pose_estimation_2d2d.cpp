@@ -29,8 +29,7 @@ Point2d pixel2cam(const Point2d& p, const Mat& K);
 
 int main(int argc, char** argv)
 {
-    if (argc != 3)
-    {
+    if (argc != 3) {
         cout << "usage: pose_estimation_2d2d img1 img2" << endl;
         return 1;
     }

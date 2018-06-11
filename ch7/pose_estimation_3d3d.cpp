@@ -91,8 +91,7 @@ protected:
 
 int main ( int argc, char** argv )
 {
-    if ( argc != 5 )
-    {
+    if ( argc != 5 ) {
         cout<<"usage: pose_estimation_3d3d img1 img2 depth1 depth2"<<endl;
         return 1;
     }
