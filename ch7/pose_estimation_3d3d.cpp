@@ -252,7 +252,7 @@ void bundleAdjustment(const vector<Point3f>& pts1,
                       Mat& R, Mat& t)
 {
     // 初始化g2o
-    typedef g2o::BlockSolver< g2o::BlockSolverTraits<6,3> > Block;  // pose 维度为 6, landmark 维度为 3
+    typedef g2o::BlockSolver<g2o::BlockSolverTraits<6,3>> Block;  // pose 维度为 6, landmark 维度为 3
     Block::LinearSolverType* linearSolver = new g2o::LinearSolverEigen<Block::PoseMatrixType>(); // 线性方程求解器
     Block* solver_ptr = new Block(linearSolver);      // 矩阵块求解器
     g2o::OptimizationAlgorithmGaussNewton* solver = new g2o::OptimizationAlgorithmGaussNewton(solver_ptr);
