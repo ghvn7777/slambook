@@ -141,10 +141,10 @@ protected:
         uchar* data = &image_->data[int(y) * image_->step + int(x)];
         float xx = x - floor(x);
         float yy = y - floor(y);
-        return float((1 - xx) * (1 - yy) * data[image_->step + 1] +
-                     xx * (1 - yy) * data[image_->step] +
-                     (1 - xx) * yy * data[1] +
-                     xx * yy * data[0]);
+        return float((1 - xx) * (1 - yy) * data[0] +
+                     xx * (1 - yy) * data[1] +
+                     (1 - xx) * yy * data[image_->step] +
+                     xx * yy * data[image_->step + 1]);
     }
 
 public:
