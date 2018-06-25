@@ -9,7 +9,7 @@
 #include "myslam/config.h"
 #include "myslam/visual_odometry.h"
 
-int main ( int argc, char** argv )
+int main(int argc, char** argv)
 {
     if (argc != 2) {
         cout << "usage: run_vo parameter_file" << endl;
@@ -17,7 +17,7 @@ int main ( int argc, char** argv )
     }
 
     myslam::Config::setParameterFile(argv[1]);
-    myslam::VisualOdometry::Ptr vo(new myslam::VisualOdometry);
+    myslam::VisualOdometry::Ptr vo(new myslam::VisualOdometry()); // VO 管理类
 
     string dataset_dir = myslam::Config::get<string>("dataset_dir");
     cout << "dataset: " << dataset_dir << endl;
@@ -42,10 +42,10 @@ int main ( int argc, char** argv )
         }
     }
 
-    myslam::Camera::Ptr camera(new myslam::Camera);
+    myslam::Camera::Ptr camera(new myslam::Camera());
 
-    // visualization
-    cv::viz::Viz3d vis ("Visual Odometry");
+    // visualizationhttps://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetmsgimg?&MsgID=3084921281817295687&skey=%40crypt_c1dc5032_465b1eadb08413d6d479e585e8e0ee0a
+    cv::viz::Viz3d vis("Visual Odometry");
     cv::viz::WCoordinateSystem world_coor(1.0), camera_coor(0.5);
     cv::Point3d cam_pos(0, -1.0, -1.0), cam_focal_point(0, 0, 0), cam_y_dir(0, 1, 0);
     cv::Affine3d cam_pose = cv::viz::makeCameraPose(cam_pos, cam_focal_point, cam_y_dir);
@@ -59,6 +59,7 @@ int main ( int argc, char** argv )
     cout << "read total " << rgb_files.size() << " entries" << endl;
     for (int i = 0; i < rgb_files.size(); i++) {
         cout << "****** loop " << i << " ******" << endl;
+
         Mat color = cv::imread(rgb_files[i]);
         Mat depth = cv::imread(depth_files[i], -1);
         if (color.data == nullptr || depth.data == nullptr) {
@@ -94,9 +95,10 @@ int main ( int argc, char** argv )
         );
 
         Mat img_show = color.clone();
-        for (auto& pt:vo->map_->map_points_) {
+        for (auto& pt : vo->map_->map_points_) {
             myslam::MapPoint::Ptr p = pt.second;
             Vector2d pixel = pFrame->camera_->world2pixel(p->pos_, pFrame->T_c_w_);
+            // 默认假设了所有 MapPoint 全在当前帧的显示范围（不会数组越界）
             cv::circle(img_show, cv::Point2f(pixel(0, 0), pixel(1, 0)), 5, cv::Scalar(0, 255, 0), 2);
         }
 

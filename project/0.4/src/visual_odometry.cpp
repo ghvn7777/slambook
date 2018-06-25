@@ -50,18 +50,18 @@ bool VisualOdometry::addFrame(Frame::Ptr frame) {
     switch (state_) {
       case INITIALIZING:
         state_ = OK;
-        curr_ = ref_ = frame;
+        curr_ = ref_ = frame; // 注意第一帧位姿没有显式计算，是默认初始化的，单位矩阵。第一帧相机坐标系和世界坐标系重合
         // extract features from first frame and add them into map
-        extractKeyPoints();
-        computeDescriptors();
-        addKeyFrame();      // the first frame is a key-frame
+        extractKeyPoints(); // 检测当前帧特征点
+        computeDescriptors(); // 计算当前帧描述子
+        addKeyFrame();      // 第一帧，将所有的 3D 点当路标插入
         break;
 
       case OK:
         curr_ = frame;
         curr_->T_c_w_ = ref_->T_c_w_;
-        extractKeyPoints();
-        computeDescriptors();
+        extractKeyPoints(); // 检测当前帧特征点
+        computeDescriptors(); // 计算当前帧描述子
         featureMatching();
         poseEstimationPnP();
         if (checkEstimatedPose() == true) {  // a good estimation
@@ -225,7 +225,7 @@ bool VisualOdometry::checkKeyFrame() {
     Vector3d rot = d.tail<3>();
     if (rot.norm() > key_frame_min_rot || trans.norm() > key_frame_min_trans){
         return true;
-    }
+    }https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetmsgimg?&MsgID=4321750384616888156&skey=%40crypt_c1dc5032_465b1eadb08413d6d479e585e8e0ee0a
     return false;
 }
 
