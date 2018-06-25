@@ -60,21 +60,22 @@ bool VisualOdometry::addFrame(Frame::Ptr frame) {
       case OK:
         curr_ = frame;
         curr_->T_c_w_ = ref_->T_c_w_;
-        extractKeyPoints(); // 检测当前帧特征点
+        extractKeyPoints();   // 检测当前帧特征点
         computeDescriptors(); // 计算当前帧描述子
-        featureMatching();
-        poseEstimationPnP();
+        featureMatching();    // 匹配，得到 map_point_, cur_frame 对应的匹配点
+        poseEstimationPnP();  // 根据上一步得到的对应匹配点做 PnP 得到当前帧的位姿
+        // 看当前帧和上一帧的相对偏移是否太大（太大说明运动剧烈）
         if (checkEstimatedPose() == true) {  // a good estimation
             curr_->T_c_w_ = T_c_w_estimated_;
-            optimizeMap();
+            optimizeMap(); // 地图优化，移除不合适的 map_point_ 并且看情况新加 map_point_
             num_lost_ = 0;
+            // 与参考帧位移或角度大到一定程度
             if (checkKeyFrame() == true) { // is a key-frame
-                addKeyFrame();
+                addKeyFrame();      // 将当前帧加到关键帧列表里并且讲当前帧设为关键帧
             }
         } else { // bad estimation due to various reasons
             num_lost_++;
-            if ( num_lost_ > max_num_lost_ )
-            {
+            if (num_lost_ > max_num_lost_) {
                 state_ = LOST;
             }
             return false;
@@ -107,12 +108,13 @@ void VisualOdometry::featureMatching() {
     // select the candidates in map 
     Mat desp_map;
     vector<MapPoint::Ptr> candidate;
+    // 找 map_ 中在当前帧的范围 map_points_ 点。
     for (auto& allpoints: map_->map_points_) {
         MapPoint::Ptr& p = allpoints.second;
         // check if p in curr frame image 
         if (curr_->isInFrame(p->pos_)) {
             // add to candidate 
-            p->visible_times_++;
+            p->visible_times_++; // 一共进行了几次匹配
             candidate.push_back(p);
             desp_map.push_back(p->descriptor_);
         }
@@ -130,8 +132,8 @@ void VisualOdometry::featureMatching() {
     match_2dkp_index_.clear();
     for (cv::DMatch& m : matches) {
         if (m.distance<max<float>(min_dis * match_ratio_, 30.0)) {
-            match_3dpts_.push_back(candidate[m.queryIdx]);
-            match_2dkp_index_.push_back(m.trainIdx);
+            match_3dpts_.push_back(candidate[m.queryIdx]); // map_point_ 中的匹配点
+            match_2dkp_index_.push_back(m.trainIdx);       // 当前帧的匹配点编号
         }
     }
     cout << "good matches: " << match_3dpts_.size() << endl;
@@ -152,9 +154,9 @@ void VisualOdometry::poseEstimationPnP() {
     }
 
     Mat K = (cv::Mat_<double>(3, 3) <<
-              ref_->camera_->fx_, 0, ref_->camera_->cx_,
-              0, ref_->camera_->fy_, ref_->camera_->cy_,
-              0, 0, 1);
+             ref_->camera_->fx_, 0, ref_->camera_->cx_,
+             0, ref_->camera_->fy_, ref_->camera_->cy_,
+             0, 0, 1);
 
     Mat rvec, tvec, inliers;
     cv::solvePnPRansac(pts3d, pts2d, K, Mat(), rvec, tvec, false, 100, 4.0, 0.99, inliers);
@@ -167,7 +169,7 @@ void VisualOdometry::poseEstimationPnP() {
     // using bundle adjustment to optimize the pose
     typedef g2o::BlockSolver<g2o::BlockSolverTraits<6,2>> Block;
     Block::LinearSolverType* linearSolver = new g2o::LinearSolverDense<Block::PoseMatrixType>();
-    Block* solver_ptr = new Block (linearSolver);
+    Block* solver_ptr = new Block(linearSolver);
     g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
     g2o::SparseOptimizer optimizer;
     optimizer.setAlgorithm(solver);
@@ -190,7 +192,7 @@ void VisualOdometry::poseEstimationPnP() {
         edge->setInformation(Eigen::Matrix2d::Identity());
         optimizer.addEdge(edge);
         // set the inlier map points 
-        match_3dpts_[index]->matched_times_++;
+        match_3dpts_[index]->matched_times_++; // 该点被匹配了几次
     }
 
     optimizer.initializeOptimization();
@@ -211,7 +213,7 @@ bool VisualOdometry::checkEstimatedPose() {
     // if the motion is too large, it is probably wrong
     SE3 T_r_c = ref_->T_c_w_ * T_c_w_estimated_.inverse();
     Sophus::Vector6d d = T_r_c.log();
-    if (d.norm() > 5.0) {
+    if (d.norm() > 5.0) {  // 看范数是否过大
         cout << "reject because motion is too large: " << d.norm() << endl;
         return false;
     }
@@ -255,7 +257,8 @@ void VisualOdometry::addKeyFrame() {
 
 void VisualOdometry::addMapPoints() {
     // add the new map points into map
-    vector<bool> matched(keypoints_curr_.size(), false); 
+    vector<bool> matched(keypoints_curr_.size(), false);
+    // 匹配到的关键点索引设为 true
     for (int index : match_2dkp_index_) {
         matched[index] = true;
     }
@@ -275,6 +278,7 @@ void VisualOdometry::addMapPoints() {
             curr_->T_c_w_, d
         );
 
+        // 将没有匹配到的关键点加到 map_point_ 中
         Vector3d n = p_world - ref_->getCamCenter();
         n.normalize();
         MapPoint::Ptr map_point = MapPoint::createMapPoint(
@@ -286,34 +290,40 @@ void VisualOdometry::addMapPoints() {
 }
 
 void VisualOdometry::optimizeMap() {
-    // remove the hardly seen and no visible points 
+    // remove the hardly seen and no visible points  当前帧不可见的 map_point_ 全部移除
     for (auto iter = map_->map_points_.begin(); iter != map_->map_points_.end(); ) {
         if (!curr_->isInFrame(iter->second->pos_)) {
             iter = map_->map_points_.erase(iter);
             continue;
         }
 
+        // 该点的匹配率： 匹配次数 / 总次数
         float match_ratio = float(iter->second->matched_times_) / iter->second->visible_times_;
         if (match_ratio < map_point_erase_ratio_) {
             iter = map_->map_points_.erase(iter);
             continue;
         }
-        
+
+        // map_point_ 与当前帧位姿的角度偏差
         double angle = getViewAngle(curr_, iter->second);
         if (angle > M_PI / 6.) {
             iter = map_->map_points_.erase(iter);
             continue;
         }
+
         if (iter->second->good_ == false) {
-            // TODO try triangulate this map point 
+            // TODO try triangulate this map point
+            cout << "map_point_ not good" << endl;
         }
         iter++;
     }
-    
+
+    // 本帧与 map_point_ 中匹配的点较少
     if (match_2dkp_index_.size() < 100) {
         addMapPoints();
     }
 
+    // 匹配点多，就少加点，所以添加的 map_point_ 点就会变少
     if (map_->map_points_.size() > 1000) {
         // TODO map is too large, remove some one 
         map_point_erase_ratio_ += 0.05;
@@ -325,9 +335,9 @@ void VisualOdometry::optimizeMap() {
 }
 
 double VisualOdometry::getViewAngle(Frame::Ptr frame, MapPoint::Ptr point) {
-    Vector3d n = point->pos_- frame->getCamCenter();
-    n.normalize();
-    return acos(n.transpose() * point->norm_);
+    Vector3d n = point->pos_- frame->getCamCenter(); // 位姿偏差
+    n.normalize(); // 归一化
+    return acos(n.transpose() * point->norm_); // a * b = |a| |b| cos<a, b> 这里 |a| 和 |b| 都是 1
 }
 
 
