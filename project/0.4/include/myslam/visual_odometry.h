@@ -25,15 +25,15 @@
 
 #include <opencv2/features2d/features2d.hpp>
 
-namespace myslam 
-{
-class VisualOdometry
-{
-public:
+namespace myslam {
+
+class VisualOdometry {
+  public:
     typedef shared_ptr<VisualOdometry> Ptr;
+
     enum VOState {
-        INITIALIZING=-1,
-        OK=0,
+        INITIALIZING = -1,
+        OK = 0,
         LOST
     };
     
@@ -64,15 +64,15 @@ public:
     int min_inliers_;       // minimum inliers
     double key_frame_min_rot;   // minimal rotation of two key-frames
     double key_frame_min_trans; // minimal translation of two key-frames
-    double  map_point_erase_ratio_; // remove map point ratio
+    double map_point_erase_ratio_; // remove map point ratio
     
-public: // functions 
+  public: // functions
     VisualOdometry();
     ~VisualOdometry();
     
-    bool addFrame( Frame::Ptr frame );      // add a new frame 
+    bool addFrame(Frame::Ptr frame);      // add a new frame
     
-protected:  
+  protected:
     // inner operation 
     void extractKeyPoints();
     void computeDescriptors(); 
@@ -85,9 +85,9 @@ protected:
     bool checkEstimatedPose(); 
     bool checkKeyFrame();
     
-    double getViewAngle( Frame::Ptr frame, MapPoint::Ptr point );
-    
-};
-}
+    double getViewAngle(Frame::Ptr frame, MapPoint::Ptr point);
+}; // VisualOdometry class
+
+} // myslam namespace
 
 #endif // VISUALODOMETRY_H
