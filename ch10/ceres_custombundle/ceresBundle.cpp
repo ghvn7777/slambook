@@ -35,7 +35,7 @@ void SetOrdering(BALProblem* bal_problem, ceres::Solver::Options* options, const
 
     ceres::ParameterBlockOrdering* ordering = new ceres::ParameterBlockOrdering;
 
-    // The points come before the cameras
+    // 点云编号顺序定义为 0，这样消元的时候就会先消点云（先消编号小的）
     for(int i = 0; i < num_points; ++i)
        ordering->AddElementToGroup(points + point_block_size * i, 0);
        
@@ -78,7 +78,7 @@ void BuildProblem(BALProblem* bal_problem, Problem* problem, const BundleParams&
     // and y position of the observation. 
     const double* observations = bal_problem->observations();
 
-    for(int i = 0; i < bal_problem->num_observations(); ++i){
+    for(int i = 0; i < bal_problem->num_observations(); ++i) {
         CostFunction* cost_function;
 
         // Each Residual block takes a point and a camera as input 

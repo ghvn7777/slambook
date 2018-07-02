@@ -11,15 +11,15 @@
 // predictions : 2D predictions with center of the image plane. 
 
 template<typename T>
-inline bool CamProjectionWithDistortion(const T* camera, const T* point, T* predictions){
+inline bool CamProjectionWithDistortion(const T* camera, const T* point, T* predictions) {
     // Rodrigues' formula
     T p[3];
-    AngleAxisRotatePoint(camera, point, p);
+    AngleAxisRotatePoint(camera, point, p); // 世界坐标系转相机坐标系
     // camera[3,4,5] are the translation
     p[0] += camera[3]; p[1] += camera[4]; p[2] += camera[5];
 
     // Compute the center fo distortion
-    T xp = -p[0]/p[2];
+    T xp = -p[0]/p[2];  // 归一化平面坐标
     T yp = -p[1]/p[2];
 
     // Apply second and fourth order radial distortion
@@ -27,10 +27,10 @@ inline bool CamProjectionWithDistortion(const T* camera, const T* point, T* pred
     const T& l2 = camera[8];
 
     T r2 = xp*xp + yp*yp;
-    T distortion = T(1.0) + r2 * (l1 + l2 * r2);
+    T distortion = T(1.0) + r2 * (l1 + l2 * r2); // 畸变去除
 
     const T& focal = camera[6];
-    predictions[0] = focal * distortion * xp;
+    predictions[0] = focal * distortion * xp; // 像素坐标系
     predictions[1] = focal * distortion * yp;
 
     return true;
