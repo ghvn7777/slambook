@@ -1,6 +1,6 @@
 #include <iostream>
 #include <cmath>
-using namespace std; 
+using namespace std;
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -55,7 +55,7 @@ int main( int argc, char** argv )
     cout << "se3 = " << se3.transpose() << endl; //平移在前，旋转在后
     cout << "se3 hat = " << endl << Sophus::SE3::hat(se3) << endl;
     cout << "se3 hat vee = " << Sophus::SE3::vee(Sophus::SE3::hat(se3)).transpose() << endl;
-
+    cout << "se3 exp = " << Sophus::SE3::exp(se3);
     // se3 更新
     Vector6d update_se3;
     update_se3.setZero();
