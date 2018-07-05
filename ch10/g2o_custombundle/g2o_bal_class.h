@@ -112,7 +112,7 @@ class EdgeObservationBAL : public g2o::BaseBinaryEdge<2, Eigen::Vector2d,VertexC
         else {
             assert(0 && "Error while differentiating");
             _jacobianOplusXi.setZero();
-            _jacobianOplusXi.setZero();
+            _jacobianOplusXj.setZero();
         }
     }
 };
