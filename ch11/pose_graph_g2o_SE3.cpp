@@ -17,19 +17,19 @@ using namespace std;
  * 这里使用g2o/types/slam3d/中的SE3表示位姿，它实质上是四元数而非李代数.
  * **********************************************/
 
-int main( int argc, char** argv )
-{
+int main(int argc, char** argv) {
     if (argc != 2) {
         cout << "Usage: pose_graph_g2o_SE3 sphere.g2o" << endl;
         return 1;
     }
+
     ifstream fin(argv[1]);
     if (!fin) {
         cout << "file " << argv[1] << " does not exist." << endl;
         return 1;
     }
 
-    typedef g2o::BlockSolver<g2o::BlockSolverTraits<6,6>> Block;  // 6x6 BlockSolver
+    typedef g2o::BlockSolver<g2o::BlockSolverTraits<6, 6>> Block;  // 6x6 BlockSolver
     Block::LinearSolverType* linearSolver = new g2o::LinearSolverCholmod<Block::PoseMatrixType>(); // 线性方程求解器
     Block* solver_ptr = new Block(linearSolver);      // 矩阵块求解器
     // 梯度下降方法，从GN, LM, DogLeg 中选
@@ -51,9 +51,9 @@ int main( int argc, char** argv )
             optimizer.addVertex(v);
             vertexCnt++;
             if (index == 0) {
-                v->setFixed(true);
+                v->setFixed(true);  // 第 0 个节点固定不优化
             }
-        } else if (name=="EDGE_SE3:QUAT") {
+        } else if (name == "EDGE_SE3:QUAT") {
             // SE3-SE3 边
             g2o::EdgeSE3* e = new g2o::EdgeSE3();
             int idx1, idx2;     // 关联的两个顶点
@@ -68,17 +68,18 @@ int main( int argc, char** argv )
             break;
         }
     }
-    
-    cout << "read total " << vertexCnt << " vertices, " << edgeCnt << " edges." << endl;
-    
+
+    cout << "read total " << vertexCnt << " vertices, "
+         << edgeCnt << " edges." << endl;
+
     cout << "prepare optimizing ..." << endl;
     optimizer.setVerbose(true);
     optimizer.initializeOptimization();
     cout << "calling optimizing ..." << endl;
     optimizer.optimize(30);
-    
+
     cout << "saving optimization results ..." << endl;
     optimizer.save("result.g2o");
-
+    
     return 0;
 }
