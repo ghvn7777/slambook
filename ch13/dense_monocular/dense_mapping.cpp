@@ -129,42 +129,40 @@ void showEpipolarLine( const Mat& ref, const Mat& curr, const Vector2d& px_ref, 
 // ------------------------------------------------------------------
 
 
-int main( int argc, char** argv )
-{
-    if ( argc != 2 )
-    {
-        cout<<"Usage: dense_mapping path_to_test_dataset"<<endl;
+int main (int argc, char** argv) {
+    if (argc != 2) {
+        cout << "Usage: dense_mapping path_to_test_dataset" << endl;
         return -1;
     }
     
     // 从数据集读取数据
     vector<string> color_image_files; 
     vector<SE3> poses_TWC;
-    bool ret = readDatasetFiles( argv[1], color_image_files, poses_TWC );
-    if ( ret==false )
-    {
-        cout<<"Reading image files failed!"<<endl;
+    bool ret = readDatasetFiles(argv[1], color_image_files, poses_TWC);
+    if (ret == false) {
+        cout << "Reading image files failed!" << endl;
         return -1; 
     }
-    cout<<"read total "<<color_image_files.size()<<" files."<<endl;
+    cout << "read total " << color_image_files.size() << " files." << endl;
     
     // 第一张图
-    Mat ref = imread( color_image_files[0], 0 );                // gray-scale image 
+    Mat ref = imread(color_image_files[0], 0);                // gray-scale image
     SE3 pose_ref_TWC = poses_TWC[0];
     double init_depth   = 3.0;    // 深度初始值
     double init_cov2    = 3.0;    // 方差初始值 
-    Mat depth( height, width, CV_64F, init_depth );             // 深度图
-    Mat depth_cov( height, width, CV_64F, init_cov2 );          // 深度图方差 
+    Mat depth(height, width, CV_64F, init_depth);             // 深度图
+    Mat depth_cov(height, width, CV_64F, init_cov2);          // 深度图方差
     
-    for ( int index=1; index<color_image_files.size(); index++ )
-    {
-        cout<<"*** loop "<<index<<" ***"<<endl;
-        Mat curr = imread( color_image_files[index], 0 );       
-        if (curr.data == nullptr) continue;
+    for (int index=1; index < color_image_files.size(); index++) {
+        cout << "*** loop " << index << " ***" << endl;
+        Mat curr = imread(color_image_files[index], 0);
+        if (curr.data == nullptr) {
+          continue;
+        }
         SE3 pose_curr_TWC = poses_TWC[index];
         SE3 pose_T_C_R = pose_curr_TWC.inverse() * pose_ref_TWC; // 坐标转换关系： T_C_W * T_W_R = T_C_R 
-        update( ref, curr, pose_T_C_R, depth, depth_cov );
-        plotDepth( depth );
+        update(ref, curr, pose_T_C_R, depth, depth_cov);
+        plotDepth(depth);
         imshow("image", curr);
         waitKey(1);
     }
