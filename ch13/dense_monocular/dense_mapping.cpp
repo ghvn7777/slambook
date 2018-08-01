@@ -139,7 +139,7 @@ int main (int argc, char** argv) {
     vector<string> color_image_files; 
     vector<SE3> poses_TWC;
     bool ret = readDatasetFiles(argv[1], color_image_files, poses_TWC);
-    if (ret == false) {
+    if (!ret) {
         cout << "Reading image files failed!" << endl;
         return -1; 
     }
@@ -243,7 +243,7 @@ bool epipolarSearch(
     const double& depth_mu, const double& depth_cov, 
     Vector2d& pt_curr )
 {
-    Vector3d f_ref = px2cam( pt_ref );
+    Vector3d f_ref = px2cam(pt_ref);
     f_ref.normalize();
     Vector3d P_ref = f_ref*depth_mu;	// 参考帧的 P 向量
     
