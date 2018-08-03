@@ -13,7 +13,7 @@ using namespace std;
 int main( int argc, char** argv )
 {
     vector<cv::Mat> colorImgs, depthImgs;    // 彩色图和深度图
-    vector<Eigen::Isometry3d> poses;         // 相机位姿
+    vector<Eigen::Isometry3d, Eigen::aligned_allocator<Eigen::Isometry3d>> poses;         // 相机位姿
     
     ifstream fin("./data/pose.txt");
     if (!fin)
@@ -58,7 +58,7 @@ int main( int argc, char** argv )
         cv::Mat color = colorImgs[i]; 
         cv::Mat depth = depthImgs[i];
         Eigen::Isometry3d T = poses[i];
-        
+
         octomap::Pointcloud cloud;  // the point cloud in octomap 
         
         for ( int v=0; v<color.rows; v++ )
@@ -77,7 +77,7 @@ int main( int argc, char** argv )
             }
             
         // 将点云存入八叉树地图，给定原点，这样可以计算投射线
-        tree.insertPointCloud( cloud, octomap::point3d( T(0,3), T(1,3), T(2,3) ) );     
+        tree.insertPointCloud( cloud, octomap::point3d( T(0,3), T(1,3), T(2,3) ) );
     }
     
     // 更新中间节点的占据信息并写入磁盘

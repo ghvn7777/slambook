@@ -15,7 +15,7 @@ using namespace std;
 int main( int argc, char** argv )
 {
     vector<cv::Mat> colorImgs, depthImgs;    // 彩色图和深度图
-    vector<Eigen::Isometry3d> poses;         // 相机位姿
+    vector<Eigen::Isometry3d, Eigen::aligned_allocator<Eigen::Isometry3d>> poses;         // 相机位姿
     
     ifstream fin("./data/pose.txt");
     if (!fin)
@@ -23,13 +23,14 @@ int main( int argc, char** argv )
         cerr<<"cannot find pose file"<<endl;
         return 1;
     }
-    
+
     for ( int i=0; i<5; i++ )
     {
         boost::format fmt( "./data/%s/%d.%s" ); //图像文件格式
+        cout << (fmt%"color"%(i+1)%"png").str() << endl;
         colorImgs.push_back( cv::imread( (fmt%"color"%(i+1)%"png").str() ));
         depthImgs.push_back( cv::imread( (fmt%"depth"%(i+1)%"pgm").str(), -1 )); // 使用-1读取原始图像
-        
+
         double data[7] = {0};
         for ( int i=0; i<7; i++ )
         {
@@ -38,9 +39,9 @@ int main( int argc, char** argv )
         Eigen::Quaterniond q( data[6], data[3], data[4], data[5] );
         Eigen::Isometry3d T(q);
         T.pretranslate( Eigen::Vector3d( data[0], data[1], data[2] ));
-        poses.push_back( T );
+        poses.push_back(Eigen::Isometry3d());
     }
-    
+
     // 计算点云并拼接
     // 相机内参 
     double cx = 325.5;
@@ -94,7 +95,6 @@ int main( int argc, char** argv )
         statistical_filter.filter( *tmp );
         (*pointCloud) += *tmp;
     }
-    
     pointCloud->is_dense = false;
     cout<<"点云共有"<<pointCloud->size()<<"个点."<<endl;
     

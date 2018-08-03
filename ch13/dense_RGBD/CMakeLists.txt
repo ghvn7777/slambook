@@ -15,12 +15,15 @@ find_package( PCL REQUIRED COMPONENT common io filters )
 include_directories( ${PCL_INCLUDE_DIRS} )
 add_definitions( ${PCL_DEFINITIONS} )
 
+find_package( Sophus REQUIRED )
+include_directories( ${Sophus_INCLUDE_DIRS} )
+
 # octomap 
 find_package( octomap REQUIRED )
 include_directories( ${OCTOMAP_INCLUDE_DIRS} )
 
 add_executable( pointcloud_mapping pointcloud_mapping.cpp )
-target_link_libraries( pointcloud_mapping ${OpenCV_LIBS} ${PCL_LIBRARIES} )
+target_link_libraries( pointcloud_mapping ${OpenCV_LIBS} ${PCL_LIBRARIES} ${Sophus_LIBRARIES})
 
 add_executable( octomap_mapping octomap_mapping.cpp )
 target_link_libraries( octomap_mapping ${OpenCV_LIBS} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES} )
