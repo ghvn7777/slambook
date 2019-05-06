@@ -8,8 +8,7 @@ using namespace std;
 #include "sophus/so3.h"
 #include "sophus/se3.h"
 
-int main( int argc, char** argv )
-{
+int main (int argc, char** argv) {
     //角轴 以 (0, 0, 1) 为轴，转 pi / 2, 沿Z轴转90度的旋转矩阵
     Eigen::Matrix3d R = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d(0, 0, 1)).toRotationMatrix();
 
@@ -35,7 +34,8 @@ int main( int argc, char** argv )
 
     // 增量扰动模型的更新
     Eigen::Vector3d update_so3(1e-4, 0, 0); //假设更新量是这个
-    Sophus::SO3 SO3_update = Sophus::SO3::exp(update_so3) * SO3_R; //这个 其实是 exp(update_so3^) 求扰动量的旋转矩阵形式
+    // 左乘更新, (实际上是 exp(so3^)，程序帮我们做了这步)，P68: R = exp(phi^)
+    Sophus::SO3 SO3_update = Sophus::SO3::exp(update_so3) * SO3_R;
     cout << "SO3 updated = " << SO3_update << endl;
 
     cout << "************我是分割线*************" << endl;
@@ -53,10 +53,10 @@ int main( int argc, char** argv )
     // se3 = [0.785398 -0.785398 0 0 0 1.5708]
     // 平移部分不是 1, 0, 0 的原因是平移部分不是李群部分的那个平移，差了一个雅克比
     cout << "se3 = " << se3.transpose() << endl; //平移在前，旋转在后
-    cout << "se3 hat = " << endl << Sophus::SE3::hat(se3) << endl;
-    cout << "se3 hat vee = " << Sophus::SE3::vee(Sophus::SE3::hat(se3)).transpose() << endl;
-    cout << "se3 exp = " << Sophus::SE3::exp(se3) << endl;
-    cout << "se3 log = " << Sophus::SE3::exp(se3).log() << endl;
+    cout << "se3 hat = " << endl << Sophus::SE3::hat(se3) << endl; // 向量转反对称矩阵（注意在 se3 上矩阵其实不是反对称的，只是我们拓展了 so3 的叫法）
+    cout << "se3 hat vee = " << Sophus::SE3::vee(Sophus::SE3::hat(se3)).transpose() << endl; // 矩阵转向量
+    cout << "se3 exp = " << Sophus::SE3::exp(se3) << endl; // 李代数转李群 (实际上是 exp(se3^)，程序帮我们做了这步)
+    cout << "se3 log = " << Sophus::SE3::exp(se3).log() << endl; // 李群转李代数
     // se3 更新
     Vector6d update_se3;
     update_se3.setZero();
