@@ -7,8 +7,7 @@
 using namespace std;
 using namespace cv;
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     if (argc != 3) {
         cout << "usage: feature_extraction img1 img2" << endl;
         return 1;
@@ -37,7 +36,7 @@ int main(int argc, char** argv)
 
     Mat outimg1;
     drawKeypoints(img_1, keypoints_1, outimg1, Scalar::all(-1), DrawMatchesFlags::DEFAULT);
-    imshow("ORB特征点", outimg1);
+    imshow("orb feature", outimg1); // ORB 特征点
 
     //-- 第三步:对两幅图像中的BRIEF描述子进行匹配，使用 Hamming 距离
     vector<DMatch> matches;
@@ -53,7 +52,7 @@ int main(int argc, char** argv)
         if (dist < min_dist) min_dist = dist;
         if (dist > max_dist) max_dist = dist;
     }
-    
+
     // 仅供娱乐的写法
     min_dist = min_element(matches.begin(), matches.end(),
             [](const DMatch& m1, const DMatch& m2) { return m1.distance < m2.distance; })->distance;
@@ -77,8 +76,8 @@ int main(int argc, char** argv)
     Mat img_goodmatch;
     drawMatches(img_1, keypoints_1, img_2, keypoints_2, matches, img_match);
     drawMatches(img_1, keypoints_1, img_2, keypoints_2, good_matches, img_goodmatch);
-    imshow("所有匹配点对", img_match);
-    imshow("优化后匹配点对", img_goodmatch);
+    imshow("all match points", img_match); // 所有匹配点对
+    imshow("optimizer match points", img_goodmatch); // 优化后的匹配点对
     waitKey(0);
 
     return 0;
