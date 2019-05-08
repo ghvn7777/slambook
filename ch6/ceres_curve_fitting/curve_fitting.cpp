@@ -10,7 +10,7 @@ using ceres::Solver;
 using ceres::Solve;
 
 using namespace std;
-
+// 修改版，优化变量可以传递多个
 // 代价函数的计算模型
 struct CurveFittingCostFunction {
     CurveFittingCostFunction(double x, double y): _x(x), _y(y) {}

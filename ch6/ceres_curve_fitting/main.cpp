@@ -26,8 +26,7 @@ struct CurveFittingCostFunction {
     const double _x, _y;    // x, y 数据
 };
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     double a = 1.0;
     double b = 2.0;
     double c = 1.0;                     // 真实参数值
@@ -50,7 +49,7 @@ int main(int argc, char** argv)
     // 构建最小二乘问题
     Problem problem;
     for (int i = 0; i < N; i++) {
-        problem.AddResidualBlock (     // 向问题中添加误差项
+        problem.AddResidualBlock(     // 向问题中添加误差项
             // 使用自动求导，模板参数：误差类型，输出维度，输入维度，维数要与前面struct中一致
             new AutoDiffCostFunction<CurveFittingCostFunction, 1, 3> (
                 new CurveFittingCostFunction(x_data[i], y_data[i])
