@@ -10,7 +10,7 @@
 #include <opencv2/core/core.hpp>
 #include <cmath>
 #include <chrono>
-using namespace std; 
+using namespace std;
 
 // 曲线模型的顶点，模板参数：优化变量维度和数据类型
 class CurveFittingVertex: public g2o::BaseVertex<3, Eigen::Vector3d> {
@@ -20,7 +20,7 @@ class CurveFittingVertex: public g2o::BaseVertex<3, Eigen::Vector3d> {
     virtual void setToOriginImpl() {  // 重置
         _estimate << 0,0,0;
     }
-    
+
     virtual void oplusImpl(const double* update) { // 更新
         _estimate += Eigen::Vector3d(update);
     }
@@ -51,8 +51,7 @@ class CurveFittingEdge: public g2o::BaseUnaryEdge<1, double, CurveFittingVertex>
     double _x;  // x 值， y 值为 _measurement
 };
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     double a = 1.0;
     double b = 2.0;
     double c = 1.0;                     // 真实参数值
@@ -62,7 +61,7 @@ int main(int argc, char** argv)
     double abc[3] = {0, 0, 0};          // abc参数的估计值
 
     vector<double> x_data, y_data;      // 数据
-    
+
     cout << "generating data: " << "\n";
     for (int i = 0; i < N; i++) {
         double x = i / 100.0;
@@ -70,7 +69,7 @@ int main(int argc, char** argv)
         y_data.push_back(exp(a * x * x + b * x + c) + rng.gaussian(w_sigma));
         cout << x_data[i] << " " << y_data[i] << "\n";
     }
-    
+
     // 构建图优化，先设定g2o
     typedef g2o::BlockSolver<g2o::BlockSolverTraits<3, 1>> Block;  // 每个误差项优化变量维度为3，误差值维度为1
     Block::LinearSolverType* linearSolver = new g2o::LinearSolverDense<Block::PoseMatrixType>(); // 线性方程求解器
@@ -82,13 +81,13 @@ int main(int argc, char** argv)
     g2o::SparseOptimizer optimizer;     // 图模型
     optimizer.setAlgorithm(solver);   // 设置求解器
     optimizer.setVerbose(true);       // 打开调试输出
-    
+
     // 往图中增加顶点
     CurveFittingVertex* v = new CurveFittingVertex();
     v->setEstimate(Eigen::Vector3d(0, 0, 0));
     v->setId(0);
     optimizer.addVertex(v);
-    
+
     // 往图中增加边
     for (int i = 0; i < N; i++) {
         CurveFittingEdge* edge = new CurveFittingEdge(x_data[i]);
@@ -98,7 +97,7 @@ int main(int argc, char** argv)
         edge->setInformation(Eigen::Matrix<double,1,1>::Identity() * 1 / (w_sigma * w_sigma)); // 信息矩阵：协方差矩阵之逆
         optimizer.addEdge(edge);
     }
-    
+
     // 执行优化
     cout << "start optimization" << "\n";
     chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
@@ -107,10 +106,10 @@ int main(int argc, char** argv)
     chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
     chrono::duration<double> time_used = chrono::duration_cast<chrono::duration<double>>(t2 - t1);
     cout << "solve time cost = " << time_used.count() << " seconds. " <<endl;
-    
+
     // 输出优化值
     Eigen::Vector3d abc_estimate = v->estimate();
     cout << "estimated model: " << abc_estimate.transpose() << endl;
-    
+
     return 0;
 }
