@@ -8,12 +8,12 @@ set( CMAKE_CXX_FLAGS "-std=c++11 -O3" )
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules )
 
 find_package( OpenCV 3.1 REQUIRED )
-# find_package( OpenCV REQUIRED ) # use this if in OpenCV2 
+# find_package( OpenCV REQUIRED ) # use this if in OpenCV2
 find_package( G2O REQUIRED )
 find_package( CSparse REQUIRED )
 
-include_directories( 
-    ${OpenCV_INCLUDE_DIRS} 
+include_directories(
+    ${OpenCV_INCLUDE_DIRS}
     ${G2O_INCLUDE_DIRS}
     ${CSPARSE_INCLUDE_DIR}
     "/usr/include/eigen3/"
@@ -22,24 +22,28 @@ include_directories(
 add_executable( feature_extraction feature_extraction.cpp  )
 target_link_libraries( feature_extraction ${OpenCV_LIBS} )
 
-# add_executable( pose_estimation_2d2d pose_estimation_2d2d.cpp extra.cpp ) # use this if in OpenCV2 
+# add_executable( pose_estimation_2d2d pose_estimation_2d2d.cpp extra.cpp ) # use this if in OpenCV2
 add_executable( pose_estimation_2d2d pose_estimation_2d2d.cpp )
 target_link_libraries( pose_estimation_2d2d ${OpenCV_LIBS} )
 
-# add_executable( triangulation triangulation.cpp extra.cpp) # use this if in opencv2 
+# 视觉 life 单应矩阵应用
+add_executable(homography virtual-billboard.cpp)
+target_link_libraries(homography ${OpenCV_LIBS})
+
+# add_executable( triangulation triangulation.cpp extra.cpp) # use this if in opencv2
 add_executable( triangulation triangulation.cpp )
 target_link_libraries( triangulation ${OpenCV_LIBS} )
 
 add_executable( pose_estimation_3d2d pose_estimation_3d2d.cpp )
-target_link_libraries( pose_estimation_3d2d 
+target_link_libraries( pose_estimation_3d2d
    ${OpenCV_LIBS}
    ${CSPARSE_LIBRARY}
    g2o_core g2o_stuff g2o_types_sba g2o_csparse_extension
 )
 
 add_executable( pose_estimation_3d3d pose_estimation_3d3d.cpp )
-target_link_libraries( pose_estimation_3d3d 
+target_link_libraries( pose_estimation_3d3d
    ${OpenCV_LIBS}
-   g2o_core g2o_stuff g2o_types_sba g2o_csparse_extension 
+   g2o_core g2o_stuff g2o_types_sba g2o_csparse_extension
    ${CSPARSE_LIBRARY}
 )

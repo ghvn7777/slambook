@@ -80,7 +80,7 @@ void find_feature_matches(const Mat& img_1, const Mat& img_2,
     // use this if you are in OpenCV2
     // Ptr<FeatureDetector> detector = FeatureDetector::create ( "ORB" );
     // Ptr<DescriptorExtractor> descriptor = DescriptorExtractor::create ( "ORB" );
-    Ptr<DescriptorMatcher> matcher  = DescriptorMatcher::create ( "BruteForce-Hamming" );
+    Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce-Hamming");
 
     //-- 第一步:检测 Oriented FAST 角点位置
     detector->detect(img_1, keypoints_1);
@@ -110,18 +110,19 @@ void find_feature_matches(const Mat& img_1, const Mat& img_2,
 
     //当描述子之间的距离大于两倍的最小距离时,即认为匹配有误.但有时候最小距离会非常小,设置一个经验值30作为下限.
     for (int i = 0; i < descriptors_1.rows; i++) {
-        if(match[i].distance <= max (2 * min_dist, 30.0)) {
+        if(match[i].distance <= max(2 * min_dist, 30.0)) {
             matches.push_back(match[i]);
         }
     }
 }
 
 
-Point2d pixel2cam(const Point2d& p, const Mat& K)
-{
+Point2d pixel2cam(const Point2d& p, const Mat& K) {
     // u = fx * (X / Z) + cx
     // v = fy * (Y / Z) + cy
     // 下面默认 Z = 1 了，求的是归一化坐标
+    //（书的 87 页： P_c 可以看成一个二维的其次坐标，称为归一化坐标，
+    //  它位于相机前方 z = 1 的平面，该平面称为归一化平面）
     return Point2d((p.x - K.at<double>(0, 2)) / K.at<double>(0, 0),
                    (p.y - K.at<double>(1, 2)) / K.at<double>(1, 1));
 }
@@ -145,18 +146,19 @@ void pose_estimation_2d2d(std::vector<KeyPoint> keypoints_1,
         points2.push_back(keypoints_2[matche.trainIdx].pt);
     }
 
-    // -- 计算基础矩阵
+    // -- 计算基础矩阵 F
     Mat fundamental_matrix;
-    // 书上基础矩阵需要内参的原因是给的变量是归一化坐标，这里直接给的是像素坐标，就不用传入内参转换了
+    // F 矩阵的形式是 K^{-T}EK^{-1}，和内参相乘的表达式，所以我们不用提供内参就能得到 F
     fundamental_matrix = findFundamentalMat(points1, points2, CV_FM_8POINT);
     cout << "fundamental_matrix is" << endl << fundamental_matrix << endl;
 
-    // -- 计算本质矩阵
+    // -- 计算本质矩阵 E
     // https://docs.opencv.org/3.0-beta/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
     Point2d principal_point(325.1, 249.7);	// 相机光心, TUM dataset 标定值 cx, cy
     double focal_length = 521;			    // 相机焦距, TUM dataset 标定值 fx, fy (这里默认是 fx = fy 的）
     Mat essential_matrix;
     // 本质矩阵需要的是归一化坐标，所以要传入相机内参将像素坐标转换成归一化坐标
+    // E 矩阵的形式是 K^{-T}EK^{-1}，要在 F 的基础上去掉内参，所以我们需要提供内参才能得到 E
     essential_matrix = findEssentialMat(points1, points2, focal_length, principal_point);
     cout << "essential_matrix is" << endl << essential_matrix << endl;
 
