@@ -5,7 +5,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
 
-// #include "extra.h" // use this if in OpenCV2 
+// #include "extra.h" // use this if in OpenCV2
 using namespace std;
 using namespace cv;
 
@@ -27,8 +27,7 @@ void pose_estimation_2d2d(std::vector<KeyPoint> keypoints_1,
 // 像素坐标转相机归一化坐标
 Point2d pixel2cam(const Point2d& p, const Mat& K);
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     if (argc != 3) {
         cout << "usage: pose_estimation_2d2d img1 img2" << endl;
         return 1;
@@ -71,17 +70,14 @@ int main(int argc, char** argv)
     return 0;
 }
 
-void find_feature_matches(const Mat& img_1,
-                          const Mat& img_2,
-                          std::vector<KeyPoint>& keypoints_1,
-                          std::vector<KeyPoint>& keypoints_2,
-                          std::vector<DMatch>& matches)
-{
+void find_feature_matches(const Mat& img_1, const Mat& img_2,
+        std::vector<KeyPoint>& keypoints_1, std::vector<KeyPoint>& keypoints_2,
+        std::vector<DMatch>& matches) {
     //-- 初始化
     Mat descriptors_1, descriptors_2;
     Ptr<FeatureDetector> detector = ORB::create(); // used in OpenCV3
     Ptr<DescriptorExtractor> descriptor = ORB::create();
-    // use this if you are in OpenCV2 
+    // use this if you are in OpenCV2
     // Ptr<FeatureDetector> detector = FeatureDetector::create ( "ORB" );
     // Ptr<DescriptorExtractor> descriptor = DescriptorExtractor::create ( "ORB" );
     Ptr<DescriptorMatcher> matcher  = DescriptorMatcher::create ( "BruteForce-Hamming" );
@@ -134,8 +130,7 @@ Point2d pixel2cam(const Point2d& p, const Mat& K)
 void pose_estimation_2d2d(std::vector<KeyPoint> keypoints_1,
                           std::vector<KeyPoint> keypoints_2,
                           std::vector<DMatch> matches,
-                          Mat& R, Mat& t)
-{
+                          Mat& R, Mat& t) {
     // 相机内参,TUM Freiburg2
     Mat K = (Mat_<double>(3, 3) << 520.9, 0, 325.1, 0, 521.0, 249.7, 0, 0, 1);
 
@@ -174,5 +169,4 @@ void pose_estimation_2d2d(std::vector<KeyPoint> keypoints_1,
     recoverPose(essential_matrix, points1, points2, R, t, focal_length, principal_point);
     cout << "R is" << endl << R <<endl;
     cout << "t is" << endl << t <<endl;
-    
 }
