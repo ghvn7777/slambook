@@ -28,8 +28,7 @@ void triangulation(const vector<KeyPoint>& keypoint_1,
 // 像素坐标转相机归一化坐标
 Point2f pixel2cam(const Point2d& p, const Mat& K);
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     if (argc != 3) {
         cout << "usage: triangulation img1 img2" << endl;
         return 1;
@@ -50,19 +49,20 @@ int main(int argc, char** argv)
 
     //-- 三角化
     vector<Point3d> points;
+    // - t 是归一化的，所以得到的 points 是基于 t 的模为 1 时我们 matches 所有特征匹配点的 3D 位置（以第一帧为世界参考系)
     triangulation(keypoints_1, keypoints_2, matches, R, t, points);
-    
+
     //-- 验证三角化点与特征点的重投影关系
     Mat K = (Mat_<double>(3, 3) << 520.9, 0, 325.1, 0, 521.0, 249.7, 0, 0, 1);
     for (int i = 0; i < matches.size(); i++) {
         Point2d pt1_cam = pixel2cam(keypoints_1[matches[i].queryIdx].pt, K);
         Point2d pt1_cam_3d(points[i].x/points[i].z,
                            points[i].y/points[i].z);  // 归一化坐标，应该和 pt1_cam 相同
-        
+
         cout << "point in the first camera frame: " << pt1_cam << endl;
         cout << "point projected from 3D:         " << pt1_cam_3d
              << ", d = " << points[i].z << endl;
-        
+
         // 第二个图
         Point2f pt2_cam = pixel2cam(keypoints_2[matches[i].trainIdx].pt, K);
         // p_2 = R * p_1 + t
@@ -72,7 +72,7 @@ int main(int argc, char** argv)
         cout << "point reprojected from second frame: " << pt2_trans.t() << endl;
         cout << endl;
     }
-    
+
     return 0;
 }
 
@@ -129,8 +129,7 @@ void find_feature_matches(const Mat& img_1,
 void pose_estimation_2d2d(const std::vector<KeyPoint>& keypoints_1,
                           const std::vector<KeyPoint>& keypoints_2,
                           const std::vector<DMatch>& matches,
-                          Mat& R, Mat& t)
-{
+                          Mat& R, Mat& t) {
     // 相机内参,TUM Freiburg2
     Mat K = (Mat_<double>(3, 3) << 520.9, 0, 325.1, 0, 521.0, 249.7, 0, 0, 1);
 
@@ -170,8 +169,7 @@ void triangulation(const vector<KeyPoint>& keypoint_1,
                    const vector<KeyPoint>& keypoint_2,
                    const std::vector<DMatch>& matches,
                    const Mat& R, const Mat& t,
-                   vector<Point3d>& points)
-{
+                   vector<Point3d>& points) {
     Mat T1 = (Mat_<float> (3,4) << 1, 0, 0, 0,
                                    0, 1, 0, 0,
                                    0, 0, 1, 0); // 前三列旋转，最后一列平移
@@ -179,7 +177,7 @@ void triangulation(const vector<KeyPoint>& keypoint_1,
         R.at<double>(0,0), R.at<double>(0,1), R.at<double>(0,2), t.at<double>(0,0),
         R.at<double>(1,0), R.at<double>(1,1), R.at<double>(1,2), t.at<double>(1,0),
         R.at<double>(2,0), R.at<double>(2,1), R.at<double>(2,2), t.at<double>(2,0));
-    
+
     Mat K = (Mat_<double>(3, 3) << 520.9, 0, 325.1, 0, 521.0, 249.7, 0, 0, 1);
     vector<Point2f> pts_1, pts_2;
     for (DMatch m : matches) {
@@ -187,12 +185,12 @@ void triangulation(const vector<KeyPoint>& keypoint_1,
         pts_1.push_back(pixel2cam(keypoint_1[m.queryIdx].pt, K));
         pts_2.push_back(pixel2cam(keypoint_2[m.trainIdx].pt, K));
     }
-    
+
     Mat pts_4d;
     // https://docs.opencv.org/3.1.0/d9/d0c/group__calib3d.html#gad3fc9a0c82b08df034234979960b778c
     // 返回的是坐标点在第一个相机坐标系的 齐次坐标
     cv::triangulatePoints(T1, T2, pts_1, pts_2, pts_4d);
-    
+
     // 转换成非齐次坐标
     for (int i = 0; i < pts_4d.cols; i++) {
         Mat x = pts_4d.col(i);
@@ -213,4 +211,3 @@ Point2f pixel2cam(const Point2d& p, const Mat& K)
     return Point2f((p.x - K.at<double>(0, 2)) / K.at<double>(0, 0),
                    (p.y - K.at<double>(1, 2)) / K.at<double>(1, 1));
 }
-
