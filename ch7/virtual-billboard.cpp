@@ -37,7 +37,7 @@ void mouseHandler(int event, int x, int y, int flags, void* data_ptr) {
 int main(int argc, char** argv) {
     // Read in the image.
     //Mat im_src = imread("first-image.jpg");
-    Mat im_src = imread("cvlife.jpg");
+    Mat im_src = imread("instead.jpg");
     Size size = im_src.size();
 
     // Create a vector of points.
