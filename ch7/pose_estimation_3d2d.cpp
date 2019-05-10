@@ -32,8 +32,7 @@ void bundleAdjustment(const vector<Point3f> points_3d,
                       const vector<Point2f> points_2d,
                       const Mat& K, Mat& R, Mat& t);
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     if (argc != 5) {
         cout << "usage: pose_estimation_3d2d img1 img2 depth1 depth2" << endl;
         return 1;
@@ -60,7 +59,7 @@ int main(int argc, char** argv)
         }
 
         float dd = d / 5000.0;
-        Point2d p1 = pixel2cam(keypoints_1[m.queryIdx].pt, K);
+        Point2d p1 = pixel2cam(keypoints_1[m.queryIdx].pt, K); // 归一化平面
         pts_3d.push_back(Point3f(p1.x * dd, p1.y * dd, dd));
         pts_2d.push_back(keypoints_2[m.trainIdx].pt);
     }
@@ -82,8 +81,7 @@ void find_feature_matches(const Mat& img_1,
                           const Mat& img_2,
                           std::vector<KeyPoint>& keypoints_1,
                           std::vector<KeyPoint>& keypoints_2,
-                          std::vector<DMatch>& matches)
-{
+                          std::vector<DMatch>& matches) {
     //-- 初始化
     Mat descriptors_1, descriptors_2;
     Ptr<FeatureDetector> detector = ORB::create(); // used in OpenCV3
@@ -91,7 +89,7 @@ void find_feature_matches(const Mat& img_1,
     // use this if you are in OpenCV2
     // Ptr<FeatureDetector> detector = FeatureDetector::create ( "ORB" );
     // Ptr<DescriptorExtractor> descriptor = DescriptorExtractor::create ( "ORB" );
-    Ptr<DescriptorMatcher> matcher  = DescriptorMatcher::create ( "BruteForce-Hamming" );
+    Ptr<DescriptorMatcher> matcher  = DescriptorMatcher::create ("BruteForce-Hamming");
 
     //-- 第一步:检测 Oriented FAST 角点位置
     detector->detect(img_1, keypoints_1);
@@ -139,10 +137,9 @@ Point2d pixel2cam(const Point2d& p, const Mat& K)
 
 void bundleAdjustment(const vector<Point3f> points_3d,
                       const vector<Point2f> points_2d,
-                      const Mat& K, Mat& R, Mat& t)
-{
+                      const Mat& K, Mat& R, Mat& t) {
     // 初始化g2o
-    typedef g2o::BlockSolver< g2o::BlockSolverTraits<6, 3>> Block;  // pose 维度为 6, landmark 维度为 3
+    typedef g2o::BlockSolver<g2o::BlockSolverTraits<6, 3>> Block;  // pose 维度为 6, landmark（观测值) 维度为 3
     Block::LinearSolverType* linearSolver = new g2o::LinearSolverCSparse<Block::PoseMatrixType>(); // 线性方程求解器
     Block* solver_ptr = new Block(linearSolver);     // 矩阵块求解器
     g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
@@ -156,7 +153,7 @@ void bundleAdjustment(const vector<Point3f> points_3d,
           R.at<double>(0, 0), R.at<double>(0, 1), R.at<double>(0, 2),
           R.at<double>(1, 0), R.at<double>(1, 1), R.at<double>(1, 2),
           R.at<double>(2, 0), R.at<double>(2, 1), R.at<double>(2, 2);
-    pose->setId (0);
+    pose->setId(0);
     pose->setEstimate(g2o::SE3Quat(R_mat,
                                    Eigen::Vector3d(t.at<double>(0, 0),
                                                    t.at<double>(1, 0),
@@ -164,7 +161,7 @@ void bundleAdjustment(const vector<Point3f> points_3d,
     optimizer.addVertex(pose);
 
     int index = 1;
-    for (const Point3f p : points_3d) {  // landmarks 第一个相机检测出匹配点的第一个相机坐标系的归坐标
+    for (const Point3f p : points_3d) {  // landmarks 第一个相机检测出匹配点的第一个相机坐标系的坐标
         g2o::VertexSBAPointXYZ* point = new g2o::VertexSBAPointXYZ();
         point->setId(index++);
         point->setEstimate(Eigen::Vector3d(p.x, p.y, p.z));
@@ -189,6 +186,7 @@ void bundleAdjustment(const vector<Point3f> points_3d,
         // 然后用已知的匹配点在第二个相机的像素坐标与这个从第一个相机推导出来的坐标做差，得到误差，也就是 观测值 - 预测值
         g2o::EdgeProjectXYZ2UV* edge = new g2o::EdgeProjectXYZ2UV();
         edge->setId(index);
+        // 由第 index 个 3d 空间点和第一个坐标系到第二个坐标系的转换构成边的两个端点，像素值传进去计算重投影误差
         edge->setVertex(0, dynamic_cast<g2o::VertexSBAPointXYZ*>(optimizer.vertex(index)));
         edge->setVertex(1, pose);
         edge->setMeasurement(Eigen::Vector2d(p.x, p.y));
