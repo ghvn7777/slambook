@@ -38,16 +38,15 @@ void bundleAdjustment(const vector<Point3f>& pts1,
                       Mat& R, Mat& t);
 
 // g2o edge
-class EdgeProjectXYZRGBDPoseOnly : public g2o::BaseUnaryEdge<3, Eigen::Vector3d, g2o::VertexSE3Expmap>
-{
+class EdgeProjectXYZRGBDPoseOnly : public g2o::BaseUnaryEdge<3, Eigen::Vector3d, g2o::VertexSE3Expmap> {
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
     EdgeProjectXYZRGBDPoseOnly(const Eigen::Vector3d& point): _point(point) {}
 
     virtual void computeError() {
         const g2o::VertexSE3Expmap* pose = static_cast<const g2o::VertexSE3Expmap*>(_vertices[0]);
-        // measurement is p, point is p'
-        _error = _measurement - pose->estimate().map(_point); // _r*xyz + _t;
+        // measurement is p1, point is p2
+        _error = _measurement - pose->estimate().map(_point); // R*p2 + t; --> pose is T_{12}
     }
 
     virtual void linearizeOplus() {
@@ -58,7 +57,7 @@ class EdgeProjectXYZRGBDPoseOnly : public g2o::BaseUnaryEdge<3, Eigen::Vector3d,
         double y = xyz_trans[1];
         double z = xyz_trans[2];
 
-        _jacobianOplusXi(0,0) = 0;  // SE3 上的导数取前 3 行， 取负 = [(Rp2 + t)^ -I] = [p1 -I]
+        _jacobianOplusXi(0,0) = 0;  // SE3 上的导数取前 3 行， 取负 = [(Rp2 + t)^ -I] = [p1 -I] (g2o 的李代数是旋转在前，平移在后，在 170 页有讲)
         _jacobianOplusXi(0,1) = -z;
         _jacobianOplusXi(0,2) = y;
         _jacobianOplusXi(0,3) = -1;
@@ -87,8 +86,7 @@ class EdgeProjectXYZRGBDPoseOnly : public g2o::BaseUnaryEdge<3, Eigen::Vector3d,
     Eigen::Vector3d _point;
 };
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     if (argc != 5) {
         cout << "usage: pose_estimation_3d3d img1 img2 depth1 depth2" << endl;
         return 1;
@@ -150,8 +148,7 @@ void find_feature_matches(const Mat& img_1,
                           const Mat& img_2,
                           std::vector<KeyPoint>& keypoints_1,
                           std::vector<KeyPoint>& keypoints_2,
-                          std::vector<DMatch>& matches)
-{
+                          std::vector<DMatch>& matches) {
     //-- 初始化
     Mat descriptors_1, descriptors_2;
     Ptr<FeatureDetector> detector = ORB::create(); // used in OpenCV3
@@ -195,19 +192,17 @@ void find_feature_matches(const Mat& img_1,
     }
 }
 
-Point2d pixel2cam(const Point2d& p, const Mat& K)
-{
+Point2d pixel2cam(const Point2d& p, const Mat& K) {
     // u = fx * (X / Z) + cx
     // v = fy * (Y / Z) + cy
-    // 下面默认 Z = 1 了，求的是归一化坐标
+    // 下面默认 Z = 1 了，求的是归一化 x, y 坐标
     return Point2d((p.x - K.at<double>(0, 2)) / K.at<double>(0, 0),
                    (p.y - K.at<double>(1, 2)) / K.at<double>(1, 1));
 }
 
 void pose_estimation_3d3d(const vector<Point3f>& pts1,
                           const vector<Point3f>& pts2,
-                          Mat& R, Mat& t)
-{
+                          Mat& R, Mat& t) {
     Point3f p1, p2;     // center of mass
     int N = pts1.size();
     for (int i = 0; i < N; i++) {
@@ -249,8 +244,7 @@ void pose_estimation_3d3d(const vector<Point3f>& pts1,
 
 void bundleAdjustment(const vector<Point3f>& pts1,
                       const vector<Point3f>& pts2,
-                      Mat& R, Mat& t)
-{
+                      Mat& R, Mat& t) {
     // 初始化g2o
     typedef g2o::BlockSolver<g2o::BlockSolverTraits<6,3>> Block;  // pose 维度为 6, landmark 维度为 3
     Block::LinearSolverType* linearSolver = new g2o::LinearSolverEigen<Block::PoseMatrixType>(); // 线性方程求解器
