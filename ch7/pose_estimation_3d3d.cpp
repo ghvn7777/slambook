@@ -264,7 +264,7 @@ void bundleAdjustment(const vector<Point3f>& pts1,
     int index = 1;
     vector<EdgeProjectXYZRGBDPoseOnly*> edges;
     for (size_t i = 0; i < pts1.size(); i++) {
-        EdgeProjectXYZRGBDPoseOnly* edge = new EdgeProjectXYZRGBDPoseOnly( // 注意我们是想找 R,t 使得 Rp' + t = p，从 2 变换到 1
+        EdgeProjectXYZRGBDPoseOnly* edge = new EdgeProjectXYZRGBDPoseOnly( //  这里的 R, t 是第二帧到第一帧的变换，详情见 177 页
             Eigen::Vector3d(pts2[i].x, pts2[i].y, pts2[i].z)); // 相机 2 的相机坐标系
         edge->setId(index);
         edge->setVertex(0, dynamic_cast<g2o::VertexSE3Expmap*>(pose));
