@@ -29,9 +29,8 @@ namespace fs = boost::filesystem;
  ********************************************/
 
 // 一次测量的值，包括一个世界坐标系下三维点与一个灰度值
-struct Measurement
-{
-    Measurement ( Eigen::Vector3d p, float g ) : pos_world ( p ), grayscale ( g ) {}
+struct Measurement {
+    Measurement(Eigen::Vector3d p, float g) : pos_world(p), grayscale(g) {}
     Eigen::Vector3d pos_world;
     float grayscale;
 };
@@ -153,8 +152,7 @@ class EdgeSE3ProjectDirect: public BaseUnaryEdge<1, double, VertexSE3Expmap> {
     cv::Mat* image_ = nullptr;                // reference image
 };
 
-int main (int argc, char** argv)
-{
+int main (int argc, char** argv) {
     if (argc != 2) {
         cout << "usage: useLK path_to_dataset" << endl;
         return 1;
@@ -222,7 +220,7 @@ int main (int argc, char** argv)
             prev_color = color.clone();
             continue;
         }
-        
+
         // 使用直接法计算相机运动
         chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
         poseEstimationDirect(measurements, &gray, K, Tcw);
@@ -236,7 +234,7 @@ int main (int argc, char** argv)
         prev_color.copyTo(img_show(cv::Rect(0, 0, color.cols, color.rows)));
         color.copyTo(img_show(cv::Rect(0, color.rows, color.cols, color.rows)));
         for (Measurement m : measurements) {
-            if (rand() > RAND_MAX / 5) {
+            if (rand() > RAND_MAX / 5) { // 点的数量太多了，随机显示一部分
                 continue;
             }
 
