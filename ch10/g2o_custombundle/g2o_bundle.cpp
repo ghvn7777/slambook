@@ -64,8 +64,8 @@ void BuildProblem(const BALProblem* bal_problem, g2o::SparseOptimizer* optimizer
     for(int j = 0; j < num_points; ++j) {
         ConstVectorRef temVecPoint(raw_points + point_block_size * j, point_block_size);
         VertexPointBAL* pPoint = new VertexPointBAL();
-        pPoint->setEstimate(temVecPoint);   // 电云的初始值
-        pPoint->setId(j + num_cameras);     // 为了不和相机冲突，加上相机的 id
+        pPoint->setEstimate(temVecPoint);   // 点云的初始值
+        pPoint->setId(j + num_cameras);     // 为了不和相机 id 冲突，id 设置为相机 id 后面的 id
 
         // 设置该点在解方程时进行 Schur 消元
         pPoint->setMarginalized(true);
@@ -237,7 +237,7 @@ void SolveProblem(const char* filename, const BundleParams& params) {
 
 int main(int argc, char** argv) {
 
-    BundleParams params(argc,argv);  // set the parameters here.
+    BundleParams params(argc, argv);  // set the parameters here.
 
     if(params.input.empty()) {
         std::cout << "Usage: bundle_adjuster -input <path for dataset>";
