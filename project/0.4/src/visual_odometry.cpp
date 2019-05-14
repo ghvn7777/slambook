@@ -105,21 +105,21 @@ void VisualOdometry::computeDescriptors() {
 void VisualOdometry::featureMatching() {
     boost::timer timer;
     vector<cv::DMatch> matches;
-    // select the candidates in map 
+    // select the candidates in map
     Mat desp_map;
     vector<MapPoint::Ptr> candidate;
     // 找 map_ 中在当前帧的范围 map_points_ 点。
     for (auto& allpoints: map_->map_points_) {
         MapPoint::Ptr& p = allpoints.second;
-        // check if p in curr frame image 
+        // check if p in curr frame image
         if (curr_->isInFrame(p->pos_)) {
-            // add to candidate 
+            // add to candidate
             p->visible_times_++; // 一共进行了几次匹配
             candidate.push_back(p);
             desp_map.push_back(p->descriptor_);
         }
     }
-    
+
     matcher_flann_.match(desp_map, descriptors_curr_, matches);
     // select the best matches
     float min_dis = std::min_element(
@@ -191,7 +191,7 @@ void VisualOdometry::poseEstimationPnP() {
         edge->setMeasurement(Vector2d(pts2d[index].x, pts2d[index].y));
         edge->setInformation(Eigen::Matrix2d::Identity());
         optimizer.addEdge(edge);
-        // set the inlier map points 
+        // set the inlier map points
         match_3dpts_[index]->matched_times_++; // 该点被匹配了几次
     }
 
@@ -200,7 +200,7 @@ void VisualOdometry::poseEstimationPnP() {
 
     T_c_w_estimated_ = SE3(pose->estimate().rotation(),
                            pose->estimate().translation());
-    
+
     cout << "T_c_w_estimated_: " << endl << T_c_w_estimated_.matrix() << endl;
 }
 
@@ -250,7 +250,7 @@ void VisualOdometry::addKeyFrame() {
             map_->insertMapPoint(map_point);
         }
     }
-    
+
     map_->insertKeyFrame(curr_);
     ref_ = curr_;
 }
@@ -273,6 +273,7 @@ void VisualOdometry::addMapPoints() {
             continue;
         }
 
+        // p_world 可以用三角化法来优化，可以参考第 7 章的代码
         Vector3d p_world = ref_->camera_->pixel2world(
             Vector2d(keypoints_curr_[i].pt.x, keypoints_curr_[i].pt.y),
             curr_->T_c_w_, d
@@ -280,7 +281,7 @@ void VisualOdometry::addMapPoints() {
 
         // 将没有匹配到的关键点加到 map_point_ 中
         Vector3d n = p_world - ref_->getCamCenter();
-        n.normalize();
+        n.normalize(); // 该点距离参考相机多远
         MapPoint::Ptr map_point = MapPoint::createMapPoint(
             p_world, n, descriptors_curr_.row(i).clone(), curr_.get()
         );
@@ -325,7 +326,7 @@ void VisualOdometry::optimizeMap() {
 
     // 匹配点多，就少加点，所以添加的 map_point_ 点就会变少
     if (map_->map_points_.size() > 1000) {
-        // TODO map is too large, remove some one 
+        // TODO map is too large, remove some one
         map_point_erase_ratio_ += 0.05;
     } else {
         map_point_erase_ratio_ = 0.1;
